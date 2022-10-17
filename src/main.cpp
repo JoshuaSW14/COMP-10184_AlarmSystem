@@ -1,99 +1,87 @@
+//I, Joshua Symons-Webb, 000812836 certify that this material is my original work. No
+//other person's work has been used without due acknowledgement.
+
 #include <Arduino.h>
 
-#define PIN_PIR D5
-#define PIN_BUTTON D6
+#define PIN_PIR D5 //Input pin for PIR Sensor
+#define PIN_BUTTON D6 //Input pin for Button
 
-// define all possible alarm states.
+//Different Alarm States
 #define ALARM_DISABLED 0
 #define ALARM_ENABLE 1
 #define ALARM_COUNTDOWN 2
 #define ALARM_ACTIVE 3
 
-int count = 0;
-int iAlarmState;
-bool bPIR;
-
-int led = LOW;
-int buttonState;
-int lastButtonState;
+int iAlarmState; //Variable to hold alarm state
+bool bPIR; //Variable to hold the state of the PIR sensor
 
 void collectInputs()
 {
-  bPIR = digitalRead(PIN_PIR);
+  bPIR = digitalRead(PIN_PIR); //Read PIR sensor for input
 
-  lastButtonState = buttonState;
-  buttonState = digitalRead(PIN_BUTTON);
-
-  if (bPIR && iAlarmState == ALARM_ENABLE)
+  if (bPIR && iAlarmState == ALARM_ENABLE) //Check if alarm is enabled and motion is detected
   {
     Serial.println("Motion Detected: Alarm Countdown Started");
-    iAlarmState = ALARM_COUNTDOWN;
-  }
-
-  if (lastButtonState == HIGH && buttonState == LOW && iAlarmState == ALARM_COUNTDOWN)
-  {
-    Serial.println("Countdown Stopped: Alarm Deactived");
-    iAlarmState = ALARM_DISABLED;
-  }
-
-  if (lastButtonState == HIGH && buttonState == LOW && iAlarmState == ALARM_DISABLED)
-  {
-    Serial.println("Alarm Armed");
-    iAlarmState = ALARM_ENABLE;
+    iAlarmState = ALARM_COUNTDOWN; //Alarm state changed to countdown
   }
 }
 
 void countdown()
 {
-  while (count < 10 && iAlarmState == ALARM_COUNTDOWN)
+  int count = 0;
+
+  while (count < 10 && iAlarmState == ALARM_COUNTDOWN) //Loop to count each second
   {
-    collectInputs();
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(125);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(125);
+    int count2 = 0;
+    while(count2 < 4){ //Blink 4 times
 
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(125);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(125);
+      //If button was pressed during countdown, disable alarm and turn off LED
+      if(!digitalRead(PIN_BUTTON)){
+        Serial.println("Button Pressed: Countdown Stopped");
+        digitalWrite(LED_BUILTIN, HIGH);
+        iAlarmState = ALARM_DISABLED;
+        break;
+      }
 
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(125);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(125);
+      //Blink LED On/Off
+      digitalWrite(LED_BUILTIN, HIGH);
+      delay(125);
+      digitalWrite(LED_BUILTIN, LOW);
+      delay(125);
 
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(125);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(125);
-
+      count2 += 1;
+    }
     count += 1;
   }
 
-  if(iAlarmState == ALARM_COUNTDOWN){
-    iAlarmState = ALARM_ACTIVE;
+  //If countdown has reach 10 seconds
+  if(count == 10){
+    iAlarmState = ALARM_ACTIVE; //Set alarm to active
   }
 }
 
 void checkAlarmState()
 {
-  switch (iAlarmState)
+  switch (iAlarmState) //Switch case to switch between the different alarm states
   {
-  case ALARM_ENABLE:
+  case ALARM_ENABLE: //Alarm is enabled, turn off LED
     Serial.println("Alarm Enabled");
     digitalWrite(LED_BUILTIN, HIGH);
-    count = 0;
     break;
-  case ALARM_DISABLED:
+  case ALARM_DISABLED: //Alarm is disabled, wait for button input to enable alarm
     Serial.println("Alarm Disabled");
+    delay(500);
+    while(!digitalRead(PIN_BUTTON)){
+      iAlarmState = ALARM_ENABLE;
+    }
+    delay(500);
     break;
-  case ALARM_ACTIVE:
+  case ALARM_ACTIVE: //Alarm has been activated, turn on LED
     Serial.println("Alarm Activated");
     digitalWrite(LED_BUILTIN, LOW);
     break;
-  case ALARM_COUNTDOWN:
-    Serial.println("Alarm Countdown");
+  case ALARM_COUNTDOWN: //Motion detect, start the countdown
+    Serial.println("Alarm Countdown Started: 10 seconds");
     countdown();
     break;
   default:
@@ -103,18 +91,22 @@ void checkAlarmState()
 
 void setup()
 {
-  Serial.begin(115200);
+  Serial.begin(115200); //configure the USB serial monitor
+  delay(500);
 
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(PIN_PIR, INPUT);
-  pinMode(PIN_BUTTON, INPUT_PULLUP);
-  buttonState = digitalRead(PIN_BUTTON);
-  iAlarmState = ALARM_ENABLE;
+  //Introduction Message
+  Serial.println("COMP-10184 - Alarm System");
+  Serial.println("Name: Joshua Symons-Webb");
+  Serial.println("Student ID: 000812836 \n\n\n");
+
+  pinMode(LED_BUILTIN, OUTPUT); //configure the LED output 
+  pinMode(PIN_PIR, INPUT); //configure the PIR sensor as an input
+  pinMode(PIN_BUTTON, INPUT_PULLUP); //configure the Button as an input
+  iAlarmState = ALARM_ENABLE; //Enable the alarm
 }
 
 void loop()
 {
-  collectInputs();
-  checkAlarmState();
-  delay(1000);
+  collectInputs(); //check for inputs
+  checkAlarmState(); //check alarm state
 }
