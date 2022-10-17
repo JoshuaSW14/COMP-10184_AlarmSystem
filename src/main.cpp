@@ -1,6 +1,6 @@
 
 // COMP-10184 – Mohawk College 
-// COMP-10184_AlarmSystem
+// COMP-10184_AlarmSystem - Completed Stage 5
 //  
 // This program demonstrates an alarm system. When the application starts, the alarm is enabled and when
 // motion is detected the 10 second countdown starts. If the button is not clicked during the countdown then
