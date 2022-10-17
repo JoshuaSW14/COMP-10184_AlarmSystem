@@ -40,6 +40,7 @@ void countdown()
         Serial.println("Button Pressed: Countdown Stopped");
         digitalWrite(LED_BUILTIN, HIGH);
         iAlarmState = ALARM_DISABLED;
+        delay(200); //Delay to avoid immediately flipping between enabled and disabled alarm states
         break;
       }
 
@@ -70,11 +71,10 @@ void checkAlarmState()
     break;
   case ALARM_DISABLED: //Alarm is disabled, wait for button input to enable alarm
     Serial.println("Alarm Disabled");
-    delay(500);
     while(!digitalRead(PIN_BUTTON)){
       iAlarmState = ALARM_ENABLE;
     }
-    delay(500);
+    delay(200); //Delay to avoid immediately flipping between enabled and disabled alarm states
     break;
   case ALARM_ACTIVE: //Alarm has been activated, turn on LED
     Serial.println("Alarm Activated");
